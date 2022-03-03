@@ -6,7 +6,7 @@
 /*   By: Cleonia <1-d_x_d-1@mail.ru>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/03 13:13:43 by Cleonia           #+#    #+#             */
-/*   Updated: 2022/03/03 13:13:54 by Cleonia          ###   ########.fr       */
+/*   Updated: 2022/03/03 16:28:08 by Cleonia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,14 @@
 # include <stdlib.h>
 
 using namespace std;
+
+# define FILE_LEN 23
+
+enum e_type
+{
+	TYPE_CPP = 1,
+	TYPE_C = 0
+};
 
 typedef struct s_list
 {
@@ -85,61 +93,92 @@ char **read_dirrectory(char *dir_path, char *file_extension)
     return (name_mas);
 }
 
+int get_type_flag(int argc, char **argv)
+{
+	int type_flag;
+
+	type_flag = TYPE_C;
+	if (argc > 1 && strlen(argv[1]) > 1)
+		type_flag = TYPE_CPP;
+	return (type_flag);
+}
+
+string *get_make_template(int type_flag)
+{
+	ifstream fin;
+
+	if (type_flag == TYPE_CPP)
+		fin.open("cpp_pattern.mc");
+	if (type_flag == TYPE_C)
+		fin.open("c_pattern.mc");
+	if (!fin)
+	{
+		cout << "pattern file open error" << endl;
+		exit (0);
+	}
+
+	string *temp;
+
+	temp = new string[23];
+	for (int i = 0; i < 23; i++)
+		getline(fin, temp[i]);
+	return (temp);
+}
+
+void add_files_in_srcs(string *temp, char **files_cpp, char **files_hpp)
+{
+	int i = -1;
+	while (files_cpp && files_cpp[++i])
+		temp[3] = temp[3] + files_cpp[i] + " ";
+	i = -1;
+	while (files_hpp && files_hpp[++i])
+		temp[8] = temp[8] + " " + files_hpp[i];
+}
+
 int main(int argc, char **argv)
 {
-	string temp[] =
-	{
-		"NAME	=\t",
-		"CPP		=\tc++ -Wall -Wextra -Werror -std=c++98",
-		"SRCS	=\t",
-		"OBJ		=\t$(SRCS:.cpp=.o)",
-		"all		:\t$(NAME)",
-		"%.o		:\t%.cpp",
-		"			$(CPP) -c $< -o $@",
-		"$(NAME)	:\t$(OBJ) MAKEFILE",
-		"			$(CPP) $(OBJ) -o $(NAME)",
-		"clean	:",
-		"			rm -f $(OBJ)",
-		"fclean	:\tclean",
-		"			rm -f $(NAME)",
-		"re		:\tfclean all",
-		".PHONY	:\tall clean fclean re"
-	};
+	string	prog_path;
+	string	*temp;
+	char	**files_hpp;
+	char	**files_cpp;
+	int		type_flag;
+	
+	type_flag = get_type_flag(argc, argv);
+	temp = get_make_template(type_flag);
+	prog_path = ".";
+	files_hpp = NULL;
+	files_cpp = NULL;
 
-	string prog_path = ".";
-	char **files_cpp = NULL;
-	char **files_hpp = NULL;
-	if (argc > 1)
+	if (argc > 2)
 	{
-		files_cpp = read_dirrectory(argv[1], (char *)"cpp");
-		files_hpp = read_dirrectory(argv[1], (char *)"hpp");
-		prog_path = argv[1];
+		if (type_flag == TYPE_CPP)
+		{
+			files_cpp = read_dirrectory(argv[2], (char *)"cpp");
+			files_hpp = read_dirrectory(argv[2], (char *)"hpp");
+		}
+		if (type_flag == TYPE_C)
+		{
+			files_cpp = read_dirrectory(argv[2], (char *)"c");
+			files_hpp = read_dirrectory(argv[2], (char *)"h");
+		}
+		prog_path = argv[2];
 	}
-	string prog_name = "";
-	if (argc > 2) 
-		prog_name = argv[2];
+
+	add_files_in_srcs(temp, files_cpp, files_hpp);
+
+	if (argc > 3)
+		temp[0] += argv[3];
+	else
+		temp[0] += "a.out";
 
 	ofstream fout(prog_path + "/Makefile");
-	fout 	<< temp[0] << prog_name << endl << endl
-			<< temp[1] << endl
-			<< temp[2];
-	for (int i = 0; files_cpp && files_cpp[i] != NULL; i++)
-		fout << files_cpp[i] << " ";
-	fout	<< endl
-			<< temp[3] << endl << endl
-			<< temp[4] << endl << endl
-			<< temp[5];
-	for (int i = 0; files_hpp && files_hpp[i] != NULL; i++)
-		fout << " " << files_hpp[i];
-	fout	<< endl
-			<< temp[6] << endl << endl
-			<< temp[7] << endl
-			<< temp[8] << endl << endl
-			<< temp[9] << endl
-			<< temp[10] << endl << endl
-			<< temp[11] << endl
-			<< temp[12] << endl << endl
-			<< temp[13] << endl << endl
-			<< temp[14] << endl;
+	if (!fout)
+	{
+		cout << "create Makefile error" << endl;
+		exit (1);
+	}
+	for(int i = 0; i < 23; i++)
+		fout << temp[i] << endl;
 	return (0);
 }
+
