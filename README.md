@@ -12,6 +12,4 @@
 
 Пример: ./make_creator cpp ../CPP_Module_00/ex00 megaphone
 
-[![Watch the video](https://drive.google.com/file/d/1cfb7FLM1ByPMluSQY84Mo1KLtwRu5bv3/view?usp=sharing)]
-
 По ошибкам - напиши, пожалуйста, в SLACK - "cleonia" или на почту - "1-d_x_d-1@mail.ru".
